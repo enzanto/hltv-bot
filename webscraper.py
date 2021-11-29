@@ -22,9 +22,10 @@ def old_tweets():
     for i in range(num_tweets):
         tweet = oldTweet[i].text
         if date in tweet:
-            return True
+            result = True
         else:
-            return date
+            result = date
+    return result
 #check if date have been tweeted before. If HLTV has not yet updated the ranks, we will retry once a minute for 10 minutes.
 date = old_tweets()
 if date == True:
