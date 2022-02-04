@@ -22,10 +22,9 @@ def old_tweets():
     for i in range(num_tweets):
         tweet = oldTweet[i].text
         if date in tweet:
-            result = True
+            return True
         else:
-            result = date
-    return result
+            return date
 #check if date have been tweeted before. If HLTV has not yet updated the ranks, we will retry once a minute for 10 minutes.
 date = old_tweets()
 if date == True:
@@ -48,7 +47,7 @@ def message():
         req = requests.get(url)
         tree = html.fromstring(req.content)
         teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
-        rank = tree.xpath('string(//span[@class="right"]/a[@href="/ranking/teams"]/text())')
+        rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
         if len(teamname) == 0:
             return "error"
         else:
