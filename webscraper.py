@@ -52,10 +52,11 @@ def message():
             return "error"
         else:
             if rank != "":
-                teamrank.append(teamname + " er rangert som " + rank)
+                teamrank.append(rank + teamname)
             else:
                 print(teamname + " has no rank")
-    message = rank_date() + '\n' + '\n'.join(teamrank) + "\n"
+    teamrank_sorted = sorted(teamrank)
+    message = rank_date() + '\n' + '\n'.join(teamrank_sorted) + "\n"
     return message
 
 tweet = message()
