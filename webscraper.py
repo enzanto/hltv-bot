@@ -2,6 +2,7 @@ import time
 import requests
 from lxml import html
 import tweepy
+import re
 from credentials import *
 
 #get date of latest ranking
@@ -52,10 +53,10 @@ def message():
             return "error"
         else:
             if rank != "":
-                teamrank.append(rank + teamname)
+                teamrank.append(rank + " " + teamname)
             else:
                 print(teamname + " has no rank")
-    teamrank_sorted = sorted(teamrank)
+    teamrank_sorted = sorted(teamrank, key=lambda rank: int(re.split(r'#| ', rank)[1]))
     message = rank_date() + '\n' + '\n'.join(teamrank_sorted) + "\n"
     return message
 
