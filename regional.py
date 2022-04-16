@@ -6,7 +6,7 @@ import tweepy
 import re
 from credentials import *
 
-debug = True
+debug = False
 print("debugging is set to: ", debug)
 #get date of latest ranking
 def rank_date():
@@ -109,7 +109,7 @@ def message():
     index = 0
     regional_msg1 = date + '\n\n' + 'Norske lag\n'
     for i in range(len(regionalRankSorted)):
-        if len(regional_msg1) + len(regionalRankSorted[i]) > 280:
+        if len(regional_msg1) + len(regionalRankSorted[i]) > 270:
             index = i
             break
         else:
