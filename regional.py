@@ -1,4 +1,5 @@
 import time
+import logging
 from datetime import datetime
 import requests
 from lxml import html
@@ -6,7 +7,15 @@ import tweepy
 import re
 from credentials import *
 
-debug = False
+debug = True
+#Setup logging
+if debug == True:
+    logging.basicConfig(level=logging.DEBUG, filename="log.log", filemode="w",
+                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+else:
+    logging.basicConfig(level=logging.INFO, filename="/log.log", filemode="w",
+                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.debug("debug is active")
 print("debugging is set to: ", debug)
 #get date of latest ranking
 def rank_date():
@@ -15,6 +24,7 @@ def rank_date():
     tree30 = html.fromstring(req30.content)
     date = tree30.xpath('string(//div[@class="regional-ranking-header"]/text())').replace('CS:GO World ranking on ', '')
     time.sleep(0.2)
+    logging.DEBUG(f"retrieved the latest rank date: {date}")
     return date
 
 Client = tweepy.Client(bearer_token, consumer_key, consumer_secret, access_token, access_token_secret)
@@ -49,10 +59,10 @@ def getRegionalLink():
 #check if date have been tweeted before. If HLTV has not yet updated the ranks, we will retry once a minute for 10 minutes.
 
 if old_tweets() == True or getRegionalLink() == 404:
-    print("rank not ready")
+    logging.info("rank not ready")
     for i in range(10):
         if old_tweets() == True or getRegionalLink() == 404:
-            print("attempt: ", i + 1)
+            logging.info("Retrying to see if new rank availible, attempt: ", i + 1)
             time.sleep(120)
         else:
             break
@@ -82,12 +92,13 @@ def message():
         teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
         rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
         if len(teamname) == 0:
+            logging.error("error in retrieving teamname")
             return "error"
         else:
             if rank != "":
                 regionalRank.append(rank + " " + teamname)
             else:
-                print(teamname + " has no rank")
+                logging.info(teamname + " has no rank")
         time.sleep(0.5)
     for url in url:
         req = requests.get(url)
@@ -95,12 +106,13 @@ def message():
         teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
         rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
         if len(teamname) == 0:
+            logging.error("error in retrieving teamname")
             return "error"
         else:
             if rank != "":
                 teamrank.append(rank + " " + teamname)
             else:
-                print(teamname + " has no rank")
+                logging.info(teamname + " has no rank")
         time.sleep(0.5)
     regionalRankSorted = sorted(regionalRank, key=lambda rank: int(re.split(r'#| ', rank)[1]))
     teamrank_sorted = sorted(teamrank, key=lambda rank: int(re.split(r'#| ', rank)[1]))
@@ -130,30 +142,39 @@ def message():
 def send_tweet():
     tweet = message()
     if "error" in tweet:
-        print("error in fetching data")
+        logging.error("error in fetching data")
         for i in range(10):
             time.sleep(10)
-            print("retrying attempt ", i + 1)
+            logging.info("retrying attempt ", i + 1)
             tweet_checked = message()
             if "error" not in tweet_checked:
-                print(tweet_checked)
-                #Client.create_tweet(text=tweet_checked)
-                print("tweet sent after ", i + 1, " attempts")
-                break
+                for i in range(len(tweet_checked)):
+                    if i == 0:
+                        if debug == True:
+                            logging.debug(tweet_checked[i])
+                        elif debug == False:
+                            tweet_id = Client.create_tweet(text=tweet_checked[i]).data["id"]
+                    else:
+                        if debug == True:
+                            logging.debug(tweet_checked[i])
+                        elif debug == False:
+                            tweet_id = Client.create_tweet(in_reply_to_tweet_id=tweet_id, text=tweet_checked[i]).data["id"]
 
     else:
         for i in range(len(tweet)):
             if i == 0:
                 if debug == True:
-                    print(tweet[i])
+                    logging.debug(tweet[i])
                 elif debug == False:
                     tweet_id = Client.create_tweet(text=tweet[i]).data["id"]
+                    logging.info(tweet[i])
             else:
                 if debug == True:
-                    print(tweet[i])
+                    logging.debug(tweet[i])
                 elif debug == False:
                     tweet_id = Client.create_tweet(in_reply_to_tweet_id=tweet_id, text=tweet[i]).data["id"]
+                    logging.info(tweet[i])
 if date == True:
-    print("Aborted")
+    logging.error("Aborting, no new ranks found or tweet already sent")
 else:
     send_tweet()
