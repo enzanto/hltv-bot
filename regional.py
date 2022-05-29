@@ -87,34 +87,62 @@ def message():
     for regionalURL in regionalList:
         req = requests.get(regionalURL)
         tree = html.fromstring(req.content)
-        regional_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
-        while url_date_sanitized not in regional_rank_date:
-            logging.debug("regional loop")
-            req = requests.get(regionalURL)
-            tree = html.fromstring(req.content)
-            regional_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
-            time.sleep(5)
-        teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
         rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
-        regionalRank.append(rank + " " + teamname)
-        logging.info(rank + " " + teamname + " " + regional_rank_date)
+        tries = 0
+        skip = False
+        while rank == "":
+            time.sleep(30)
+            tries = tries + 1
+            logging.info("try: " + str(tries))
+            if tries >= 20:
+                skip = True
+                break
+        if skip == False:
+            regional_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
+            while url_date_sanitized not in regional_rank_date:
+                logging.debug("regional loop")
+                req = requests.get(regionalURL)
+                tree = html.fromstring(req.content)
+                regional_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
+                time.sleep(5)
+            teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
+            rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
+            regionalRank.append(rank + " " + teamname)
+            logging.info(rank + " " + teamname + " " + regional_rank_date)
+        elif skip == True:
+            teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
+            logging.info("skipping " + teamname)
         time.sleep(0.5)
     for url in url:
         req = requests.get(url)
         tree = html.fromstring(req.content)
-        list_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
-        while url_date_sanitized not in list_rank_date:
-            req = requests.get(regionalURL)
-            tree = html.fromstring(req.content)
-            list_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
-            time.sleep(5)
-        teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
         rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
-        teamrank.append(rank + " " + teamname)
-        logging.info(rank + " " + teamname + " " + list_rank_date)
+        tries = 0
+        skip = False
+        while rank == "":
+            time.sleep(30)
+            tries = tries + 1
+            logging.info("try: " + str(tries))
+            if tries >= 10:
+                skip = True
+                break
+        if skip == False:
+            list_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
+            while url_date_sanitized not in list_rank_date:
+                req = requests.get(regionalURL)
+                tree = html.fromstring(req.content)
+                list_rank_date = tree.xpath('/html/body/div[2]/div[1]/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a')[0].attrib["href"]
+                time.sleep(5)
+            teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
+            rank = tree.xpath('string(//html/body/div[2]/div/div[2]/div[1]/div/div[2]/div[2]/div[1]/span/a/text())')
+            teamrank.append(rank + " " + teamname)
+            logging.info(rank + " " + teamname + " " + list_rank_date)
+        elif skip == True:
+            teamname = tree.xpath('string(//h1[@class="profile-team-name text-ellipsis"]/text())')
+            logging.info("skipping " + teamname)
         time.sleep(0.5)
-    regionalRankSorted = sorted(regionalRank, key=lambda rank: int(re.split(r'#| ', rank)[1]))
-    teamrank_sorted = sorted(teamrank, key=lambda rank: int(re.split(r'#| ', rank)[1]))
+    regionalRankSorted = sorted(regionalRank, key=lambda rank: int(re.split(r'([0-9]+)', rank)[1]))
+    teamrank_sorted = sorted(teamrank, key=lambda rank: int(re.split(r'([0-9]+)', rank)[1]))
     #message = rank_date() + '\n' + "Norske lag:" + '\n' + '\n'.join(regionalRankSorted) + '\n \n' + "norske organisasjoner:" + '\n' + '\n'.join(teamrank_sorted)
     message = []
     index = 0
